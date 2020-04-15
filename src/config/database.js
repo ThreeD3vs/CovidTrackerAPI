@@ -4,5 +4,4 @@ module.exports = {
   storage: 'db.sqlite',
   host: 'localhost',
   dialect: 'sqlite',
-
 }

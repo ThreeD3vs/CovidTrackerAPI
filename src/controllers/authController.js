@@ -1,22 +1,27 @@
 const { User } = require('../app/models');
 const jwt = require('jsonwebtoken');
+
+const validator = require('../helpers/emailValidator')
+
 require('dotenv').config({path:'./.env'});
 
 
 exports.auth = async (req, res) => {
-    const { username } = req.body;
-    const { password } = req.body;
+    const { email, password,  } = req.body;
 
-    if (!username || !password) {
+    if (!email || !password) {
         res.status(500).json({
             message: "User Detail Cannot be empty"
         })
-
+    } else if(!validator.emailValidation(email)){
+        res.status(400).json({
+            message: "Invalid e-mail"
+        })
     } else {
 
         let result = await User.findAndCountAll({
             where: {
-                username: username,
+                email: email,
                 password: password
             },
             limit: 1,

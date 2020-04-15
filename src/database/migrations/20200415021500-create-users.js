@@ -10,7 +10,7 @@ module.exports = {
         type: DataTypes.INTEGER,
       },
 
-      username: {
+      email: {
         allowNull: false,
         type: DataTypes.STRING
       },

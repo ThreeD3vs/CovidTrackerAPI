@@ -1,16 +1,22 @@
 const { User } = require('../app/models')
 
+const validator = require('../helpers/emailValidator')
+
 exports.register = async (req, res) => {
-    const { username } = req.body;
-    const { password } = req.body;
-    if (!username || !password) {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
         res.status(400).json({
             message: "User Detail Cannot be empty"
+        })
+    } else if(!validator.emailValidation(email)){
+        res.status(400).json({
+            message: "Invalid e-mail"
         })
     } else {
         const result = await User.count({
             where: {
-                username: username
+                email: email
             }
         });
 
@@ -18,7 +24,7 @@ exports.register = async (req, res) => {
             res.status(406).json({ message: 'User Already Registered'});
         }
         else {
-            User.create({ username: username, password: password });
+            User.create({ email: email, password: password });
             res.status(201).json({ message: 'Successfully Registered' });
         }
 
