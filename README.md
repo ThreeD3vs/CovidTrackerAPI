@@ -3,11 +3,7 @@
 This is a simple API using MVC and JWT
 
 # Routes
-<<<<<<< HEAD
 
-=======
-111
->>>>>>> de87b3d632df8c79c1c4949f567009ed73bd185b
 * ``/users/register => POST(username, password)`` this register an user
 * ``/users/me => GET(Requires Authorization from /auth)`` show all info about you.
 * ``/users => GET(Requires Authorization from /auth)`` this show all registred users
