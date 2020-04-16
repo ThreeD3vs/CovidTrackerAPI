@@ -12,7 +12,7 @@ exports.send = async (token, email) => {
         }
     });
 
-    const result = await transporter.sendMail({
+    await transporter.sendMail({
         from: `"CoronaTracker 👩🏻‍💻" <naka@waifu.club>`,
         to: `${email}, ${email}`,
         subject: 'CoronaTracker - Account Activation',
