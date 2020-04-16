@@ -32,7 +32,7 @@ exports.register = async (req, res) => {
                 });
 
                 var token = jwt.sign({ email }, process.env.SECRET_EMAIL, {
-                    expiresIn: 300
+                    expiresIn: '1d'
                 });
                 sendEmail.send(token, email)
                 res.status(201).json({ message: 'Successfully Registered' });
@@ -92,7 +92,7 @@ exports.resendEmailValidation = async (req, res) => {
         }
 
     } else if (!result.rows[0].confirmed) {
-        var token = jwt.sign({ email }, process.env.SECRET_EMAIL, { expiresIn: 300 });
+        var token = jwt.sign({ email }, process.env.SECRET_EMAIL, { expiresIn: '1d' });
         sendEmail.send(token, email)
         res.status(201).json({ error: 'A confirmation email has been sent' });
     } else {
