@@ -1,4 +1,4 @@
-const { User } = require('../app/models')
+const { Users } = require('../app/models')
 const jwt = require('jsonwebtoken');
 const validator = require('../helpers/emailValidator')
 const sendEmail = require('../helpers/sendEmail')
@@ -17,31 +17,35 @@ exports.register = async (req, res) => {
             message: "Invalid e-mail"
         })
     } else {
-        const result = await User.count({
-            where: {
-                email: email
+        try{
+            const result = await Users.count({
+                where: {
+                    email: email
+                }
+            });
+            if (result >= 1) {
+                res.status(406).json({ message: 'User Already Registered' });
             }
-        });
-        if (result >= 1) {
-            res.status(406).json({ message: 'User Already Registered' });
-        }
-        else {
-            User.create({
-                email: email, password: password
+            else {
+                Users.create({
+                    email: email, password: password
+                });
 
-            });
-            var token = jwt.sign({ email }, process.env.SECRET_EMAIL, {
-                expiresIn: 300
-            });
-            sendEmail.send(token, email)
-            res.status(201).json({ message: 'Successfully Registered' });
+                var token = jwt.sign({ email }, process.env.SECRET_EMAIL, {
+                    expiresIn: 300
+                });
+                sendEmail.send(token, email)
+                res.status(201).json({ message: 'Successfully Registered' });
+            }
+        }catch(err){
+            console.log(err)
+            res.status(500).json({ message: 'Occurred error' });
         }
-
     }
 }
 
 exports.users = async (req, res) => {
-    const users = await User.findAll();
+    const users = await Users.findAll();
     res.send(users);
 }
 
@@ -50,15 +54,26 @@ exports.verify = async (req, res) => {
         if (err) {
             res.status(500).send('Invalid Token');
         } else {
-            await User.update({ confirmed: true }, { where: { email: decoded.email } })
-            res.send('Email confirmed successfully')
+            let result = await Users.findAndCountAll({
+                where: {
+                    email: decoded.email
+                },
+                limit: 1,
+                raw: true,
+            })
+
+            if(!result.rows[0].confirmed){
+                await Users.update({ confirmed: true }, { where: { email: decoded.email } })
+                res.status(200).send('Email confirmed successfully')
+            }else{
+                res.status(500).send('This email is confirmed')
+            }
         }
     })
-
 
 }
 
 exports.me = async (req, res) => {
-    const me = await User.findByPk(req.userId);
+    const me = await Users.findByPk(req.userId);
     res.status(201).json({ data: me });
 }
