@@ -15,6 +15,12 @@ module.exports = {
         type: DataTypes.STRING
       },
 
+      confirmed: {
+        allowNull: false,
+        defaultValue: false,
+        type: DataTypes.BOOLEAN
+      },
+
       password: {
         allowNull: false,
         type: DataTypes.STRING

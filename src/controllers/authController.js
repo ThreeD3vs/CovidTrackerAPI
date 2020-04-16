@@ -13,6 +13,7 @@ exports.auth = async (req, res) => {
         res.status(500).json({
             message: "User Detail Cannot be empty"
         })
+        
     } else if(!validator.emailValidation(email)){
         res.status(400).json({
             message: "Invalid e-mail"
