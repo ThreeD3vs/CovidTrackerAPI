@@ -3,21 +3,21 @@ const jwt = require('jsonwebtoken');
 const validator = require('../helpers/emailValidator')
 const sendEmail = require('../helpers/sendEmail')
 
-require('dotenv').config({path:'./.env'});
+require('dotenv').config({ path: './.env' });
 
 exports.register = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
         res.status(400).json({
-            message: "User Detail Cannot be empty"
+            error: 'User Detail Cannot be empty'
         })
     } else if (!validator.emailValidation(email)) {
         res.status(400).json({
-            message: "Invalid e-mail"
+            error: 'Invalid e-mail'
         })
     } else {
-        try{
+        try {
             const result = await Users.count({
                 where: {
                     email: email
@@ -37,9 +37,8 @@ exports.register = async (req, res) => {
                 sendEmail.send(token, email)
                 res.status(201).json({ message: 'Successfully Registered' });
             }
-        }catch(err){
-            console.log(err)
-            res.status(500).json({ message: 'Occurred error' });
+        } catch (err) {
+            res.status(500).json({ error: 'Occurred error' });
         }
     }
 }
@@ -54,7 +53,7 @@ exports.verify = async (req, res) => {
         if (err) {
             res.status(500).send('Invalid Token');
         } else {
-            let result = await Users.findAndCountAll({
+            let result = await Users.findAll({
                 where: {
                     email: decoded.email
                 },
@@ -62,15 +61,43 @@ exports.verify = async (req, res) => {
                 raw: true,
             })
 
-            if(!result.rows[0].confirmed){
+            if (!result.confirmed) {
                 await Users.update({ confirmed: true }, { where: { email: decoded.email } })
-                res.status(200).send('Email confirmed successfully')
-            }else{
-                res.status(500).send('This email is confirmed')
+                res.status(200).json({ message: 'Email confirmed successfully' })
+            } else {
+                res.status(500).json({ error: 'This email has already confirmed' })
             }
         }
     })
 
+}
+
+exports.resendEmailValidation = async (req, res) => {
+    const { email } = req.body;
+    let result = await Users.findAndCountAll({
+        where: {
+            email: email,
+        },
+        limit: 1,
+        raw: true,
+    })
+
+    if (!validator.emailValidation(email)) {
+        res.status(400).json({
+            message: 'Invalid e-mail'
+        })
+
+        if (!result.count) {
+            res.status(500).json({ error: 'User not found!' });
+        }
+
+    } else if (!result.rows[0].confirmed) {
+        var token = jwt.sign({ email }, process.env.SECRET_EMAIL, { expiresIn: 300 });
+        sendEmail.send(token, email)
+        res.status(201).json({ error: 'A confirmation email has been sent' });
+    } else {
+        res.status(201).json({ error: 'Email has already confirmed' });
+    }
 }
 
 exports.me = async (req, res) => {
