@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const validator = require('../helpers/emailValidator')
 const sendEmail = require('../helpers/sendEmail')
 
+require('dotenv').config({path:'./.env'});
+
 exports.register = async (req, res) => {
     const { email, password } = req.body;
 
@@ -28,7 +30,7 @@ exports.register = async (req, res) => {
                 email: email, password: password
 
             });
-            var token = jwt.sign({ email }, 'testing', {
+            var token = jwt.sign({ email }, process.env.SECRET_EMAIL, {
                 expiresIn: 300
             });
             sendEmail.send(token, email)
@@ -44,7 +46,7 @@ exports.users = async (req, res) => {
 }
 
 exports.verify = async (req, res) => {
-    var decoded = jwt.verify(req.query.token, 'testing', async function (err, decoded) {
+    var decoded = jwt.verify(req.query.token, process.env.SECRET_EMAIL, async function (err, decoded) {
         if (err) {
             res.status(500).send('Invalid Token');
         } else {
