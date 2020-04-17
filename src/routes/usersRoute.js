@@ -4,8 +4,7 @@ const verifyJWT = require('../middleware/verifyJWT');
 
 const controller = require('../controllers/userController')
 
-router.get('/', verifyJWT, controller.users);
-router.get('/verify', controller.verify);
+router.get('/verify', controller.emailConfirmation);
 router.get('/me', verifyJWT, controller.me);
 router.post('/register', controller.register);
 

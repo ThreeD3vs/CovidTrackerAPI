@@ -1,9 +1,10 @@
-const { User } = require('../app/models');
-const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken')
+const userService = require('../services/userService')
+const authService = require('../services/authService')
 
-const validator = require('../helpers/emailValidator')
+const emailValidator = require('../helpers/emailValidator')
 
-require('dotenv').config({path:'./.env'});
+require('dotenv').config({path:'./.env'})
 
 
 exports.auth = async (req, res) => {
@@ -14,35 +15,27 @@ exports.auth = async (req, res) => {
             message: "User Detail Cannot be empty"
         })
         
-    } else if(!validator.emailValidation(email)){
+    } else if(!emailValidator.validate(email)){
         res.status(400).json({
             message: "Invalid e-mail"
         })
     } else {
 
-        let result = await User.findAndCountAll({
-            where: {
-                email: email,
-                password: password
-            },
-            limit: 1,
-            raw: true,
-        })
+        await userService.findByEmailAndPassword(email, password).then((result) => {
+            if(!result) {
+                res.json({ message: 'User or Password Incorrect' });
+            } else {
+                const id = result.rows[0].id;
+                const expires = '1h'
 
-        if (!result.count) {
-            res.json({ message: 'User or Password Incorrect' });
-            
-        } else {
-            const uid = result.rows[0].id;
-
-            var token = jwt.sign({uid}, process.env.SECRET, {
-                expiresIn: 300 // expires in 5min
-              });
-
-            res.status(200).send({auth: true, token: token});
-
-        }
-
+                const token = authService.sign(expires,id).then
+    
+                res.status(200).send({auth: true, token: token});
+    
+            }
+        }).catch((err) => {
+            res.status(err.httpStatusCode).json({ message: err.message })
+        }) 
     }
 
 

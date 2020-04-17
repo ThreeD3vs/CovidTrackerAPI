@@ -1,9 +1,9 @@
 const validator = require('email-validator')
 
-exports.emailValidation = (email) => {
+exports.validate = (email) => {
     return validator.validate(email)
 }
 
-exports.emailValidationAsync = async (email) => {
+exports.validateAsync = async (email) => {
     return await validator.validate_async(email)
 }

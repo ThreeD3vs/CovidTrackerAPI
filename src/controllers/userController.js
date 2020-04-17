@@ -1,9 +1,6 @@
-const { User } = require('../app/models')
-const jwt = require('jsonwebtoken');
-const validator = require('../helpers/emailValidator')
-const sendEmail = require('../helpers/sendEmail')
-
-require('dotenv').config({path:'./.env'});
+const emailValidator = require('../helpers/emailValidator')
+const userService = require('../services/userService')
+const authService = require('../services/authService')
 
 exports.register = async (req, res) => {
     const { email, password } = req.body;
@@ -12,50 +9,48 @@ exports.register = async (req, res) => {
         res.status(400).json({
             message: "User Detail Cannot be empty"
         })
-    } else if (!validator.emailValidation(email)) {
+    } else if (!emailValidator.validate(email)) {
         res.status(400).json({
             message: "Invalid e-mail"
         })
     } else {
-        const result = await User.count({
-            where: {
-                email: email
-            }
+        
+        userService.register(email,password)
+        .then((result) => {
+
+            res.status(200).json({ message: 'Successfully registered' });
+       
+        }).catch((err) => {
+        
+            res.status(err.httpStatusCode).json({ message: err.message })
+        
         });
-        if (result >= 1) {
-            res.status(406).json({ message: 'User Already Registered' });
-        }
-        else {
-            User.create({
-                email: email, password: password
-
-            });
-            var token = jwt.sign({ email }, process.env.SECRET_EMAIL, {
-                expiresIn: 300
-            });
-            sendEmail.send(token, email)
-            res.status(201).json({ message: 'Successfully Registered' });
-        }
-
     }
 }
 
-exports.users = async (req, res) => {
-    const users = await User.findAll();
-    res.send(users);
-}
+exports.emailConfirmation = async (req, res) => {
+    const { token } = req.query
 
-exports.verify = async (req, res) => {
-    var decoded = jwt.verify(req.query.token, process.env.SECRET_EMAIL, async function (err, decoded) {
-        if (err) {
-            res.status(500).send('Invalid Token');
-        } else {
-            await User.update({ confirmed: true }, { where: { email: decoded.email } })
-            res.send('Email confirmed successfully')
-        }
-    })
+    await authService.verifyToken(token).then((result) => {
+        if(!result)
+            res.status(401).send('Invalid Token');
 
+        console.log(result)
 
+        const {email} = result
+
+        userService.confirmUser(email).then((result) =>{
+            
+            res.status(200).json({ message: 'Successfully confirmed' });
+
+        }).catch((err)=>{
+
+            res.status(err.httpStatusCode).json({ message: err.message });
+        
+        })
+    }).catch((err) => {
+        res.status(err.httpStatusCode).json({ message: err.message });
+    });
 }
 
 exports.me = async (req, res) => {
