@@ -18,42 +18,36 @@ exports.register = async (req, res) => {
         userService.register(email,password)
         .then((result) => {
 
-            res.status(200).json({ message: 'Successfully registered' });
+            res.status(200).json({ message: 'Successfully registered' })
        
         }).catch((err) => {
-        
-            res.status(err.httpStatusCode).json({ message: err.message })
-        
+            res.status(err.httpStatusCode).json({ error: err.message })
         });
     }
 }
 
 exports.emailConfirmation = async (req, res) => {
     const { token } = req.query
-
-    await authService.verifyToken(token).then((result) => {
-        if(!result)
-            res.status(401).send('Invalid Token');
-
-        console.log(result)
-
+    
+    authService.verifyTokenEmail(token).then(async (result) => {
         const {email} = result
-
-        userService.confirmUser(email).then((result) =>{
-            
-            res.status(200).json({ message: 'Successfully confirmed' });
-
-        }).catch((err)=>{
-
-            res.status(err.httpStatusCode).json({ message: err.message });
         
+        userService.confirmUser(email).then(() =>{
+            res.status(200).json({ message: 'Successfully confirmed' })
+        }).catch((err) => {
+            res.status(err.httpStatusCode).json({ error: err.message })
         })
     }).catch((err) => {
-        res.status(err.httpStatusCode).json({ message: err.message });
-    });
+        res.status(err.httpStatusCode).json({ error: err.message })
+    })
 }
 
 exports.me = async (req, res) => {
-    const me = await User.findByPk(req.userId);
-    res.status(201).json({ data: me });
+    await userService.findByPk(req.userId)
+    .then((user) => {
+        res.status(201).json({ data: user });
+    }).catch((err) => {
+        console.log(err)
+        res.status(err.httpStatusCode).json({ error: err.message })
+    })
 }

@@ -3,15 +3,16 @@ const jwt = require('jsonwebtoken');
 
 require('dotenv').config({path:'./.env'});
 
-exports.verifyToken = async (token) => {
-    await jwt.verify(token, process.env.SECRET_EMAIL, async function (err, decoded) {
+exports.verifyTokenEmail = async (token) => {
+    const result = await jwt.verify(token, process.env.SECRET_EMAIL, async function (err, decoded) {
         if (err) {
             throw invalidOperationError(500,'Invalid token')
         } else {
-            if(!decoded)
-                return decoded
+            return decoded
         }
     })
+
+    return result
 }
 
 exports.createTokenWithEmail = (expires, email) => {
@@ -22,10 +23,21 @@ exports.createTokenWithEmail = (expires, email) => {
     return token
 }
 
+exports.verifyToken = async (token) => {
+    const result = await jwt.verify(token, process.env.SECRET, async function (err, decoded) {
+        if (err) {
+            throw invalidOperationError(500,'Invalid token')
+        } else {
+            return decoded
+        }
+    })
+    return result
+}
+
 exports.sign = (expires, id) => {
     var token = jwt.sign({ id }, process.env.SECRET, {
         expiresIn: expires
     });
-
+    
     return token
 }
