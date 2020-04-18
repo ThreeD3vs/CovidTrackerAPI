@@ -18,7 +18,7 @@ exports.auth = async (req, res) => {
     } else {
 
         userService.findByEmailAndPassword(email, password).then(async (result) => {
-            if(result.lenght <= 0) {
+            if(!result.length > 0) {
                 res.status(406).json({ message: 'User or Password Incorrect' })
             } else {
                 const id = result[0].id;

@@ -22,7 +22,6 @@ exports.findByEmailAndPassword = async (email,password) => {
         limit: 1,
         raw: true
     })
-
     return result
 }
 
