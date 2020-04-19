@@ -9,7 +9,7 @@ const authRoute = require('./routes/authRoute')
 
 const limiter = rateLimit({
     windowMs: 20 * 60 * 1000, // 20 minutes
-    max: 5,
+    max: 100,
     message: 'You look tired, go get some rest.'
   });
 
