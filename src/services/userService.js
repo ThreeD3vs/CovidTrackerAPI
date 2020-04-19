@@ -44,42 +44,39 @@ exports.register = async (email,password) => {
     if (result.length > 0)
         throw invalidOperationError(406,'User Already Registered')
 
-    Users.create({
+    await Users.create({
         email: email,
         password: password
-    }).then(async () => {
-        const expires = '1d'
-        const token = authService.createTokenWithEmail(expires,email)
-        await emailService.sendEmailVerification(token, email)
     })
+
+    const expires = '1d'
+    const token = authService.createTokenWithEmail(expires,email)
+    await emailService.sendEmailVerification(token, email)
 }
 
 exports.resendEmailVerification = async (email) => {
-    this.userIsConfirmed(email).then(async (result) => {
-        
-        if(result){
-            throw invalidOperationError(406,"User is activated, not is possible resend")
-        } else {
-            const expires = '1d'
-            const token = authService.createTokenWithEmail(expires,email)            
-            await emailService.resendEmailVerification(token, email)
-        }
-    })
+    const result = await this.userIsConfirmed(email)
+
+    if(result){
+        throw invalidOperationError(406,"User is activated, not is possible resend")
+    } else {
+        const expires = '1d'
+        const token = authService.createTokenWithEmail(expires,email)            
+        await emailService.resendEmailVerification(token, email)
+    }
 }
 
 exports.userIsConfirmed = async (email) => {
-    const result = Users.count({
+    const result = await Users.count({
         where: { 
             email: email,
             confirmed : true
         }
-    }).then((result) => {
-        if(result > 0)
-            return true
-        return false
     })
 
-    return result
+    if(result > 0)
+        return true
+    return false
 }
 
 exports.confirmUser = async (email) => {

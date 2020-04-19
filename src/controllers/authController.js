@@ -1,6 +1,6 @@
-const jwt = require('jsonwebtoken')
 const userService = require('../services/userService')
 const authService = require('../services/authService')
+const { invalidOperationError, responseErrorFormated } = require('../helpers/errorHandler')
 
 const emailValidator = require('../helpers/emailValidator')
 
@@ -11,27 +11,27 @@ exports.auth = async (req, res) => {
     const { email, password,  } = req.body;
 
     if (!email || !password) {
-        res.status(500).json({ message: "User Detail Cannot be empty" })
-        
+        throw invalidOperationError(401, 'User detail cannot be empty')        
     } else if(!emailValidator.validate(email)){
-        res.status(400).json({ message: "Invalid e-mail" })
+        throw invalidOperationError(400, 'Invalid e-mail')
     } else {
-
-        userService.findByEmailAndPassword(email, password).then(async (result) => {
-            if(!result.length > 0) {
-                res.status(406).json({ message: 'User or Password Incorrect' })
-            } else {
+        try {
+            const result = await userService.findByEmailAndPassword(email, password);
+           
+            if(!result.length > 0)
+                throw invalidOperationError(406, 'User or password incorrect')
+            else{
+                const isConfirmed = await userService.userIsConfirmed(email)
+                if(!isConfirmed)
+                    throw invalidOperationError(406, 'This user not is confirmed, please confirm your email')
                 const id = result[0].id;
                 const expires = '1h'
-                
-                const token = authService.sign(expires,id)
-    
+                const token = authService.sign(expires,id)    
                 res.status(200).json({auth: true, token: token});
-    
             }
-        }).catch((err) => {
-            res.status(err.httpStatusCode).json({ message: err.message })
-        }) 
+        } catch (err) {
+            responseErrorFormated(res,err)
+        }
     }
 
 

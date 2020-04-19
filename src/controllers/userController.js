@@ -1,53 +1,43 @@
 const emailValidator = require('../helpers/emailValidator')
 const userService = require('../services/userService')
 const authService = require('../services/authService')
+const { invalidOperationError,responseErrorFormated } = require('../helpers/errorHandler')
 
 exports.register = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-        res.status(400).json({
-            message: "User Detail Cannot be empty"
-        })
+        throw invalidOperationError(400, 'User detail cannot be empty')
     } else if (!emailValidator.validate(email)) {
-        res.status(400).json({
-            message: "Invalid e-mail"
-        })
+        throw invalidOperationError(400, 'Invalid e-mail')
     } else {
-        
-        userService.register(email,password)
-        .then((result) => {
+        try {
+            await userService.register(email,password)
 
-            res.status(200).json({ message: 'Successfully registered' })
-       
-        }).catch((err) => {
-            res.status(err.httpStatusCode).json({ error: err.message })
-        });
+            res.status(200).json({ message: 'Successfully registered' })   
+        } catch (err) {
+            responseErrorFormated(res,err)
+        }
     }
 }
 
 exports.emailConfirmation = async (req, res) => {
     const { token } = req.query
-    
-    authService.verifyTokenEmail(token).then(async (result) => {
-        const {email} = result
-        
-        userService.confirmUser(email).then(() =>{
-            res.status(200).json({ message: 'Successfully confirmed' })
-        }).catch((err) => {
-            res.status(err.httpStatusCode).json({ error: err.message })
-        })
-    }).catch((err) => {
-        res.status(err.httpStatusCode).json({ error: err.message })
-    })
+
+    try {
+        const { email } = await authService.verifyTokenEmail(token)
+        await userService.confirmUser(email)
+        res.status(200).json({ message: 'Successfully confirmed' })
+    } catch (err) {
+        responseErrorFormated(res,err)
+    }
 }
 
 exports.me = async (req, res) => {
-    await userService.findByPk(req.userId)
-    .then((user) => {
-        res.status(201).json({ data: user });
-    }).catch((err) => {
-        console.log(err)
-        res.status(err.httpStatusCode).json({ error: err.message })
-    })
+    try {
+        const user = await userService.findByPk(req.userId)
+        res.status(201).json({ data: user })
+    } catch (err) {
+        responseErrorFormated(res,err)
+    }
 }
